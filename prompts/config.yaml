@@ -1,0 +1,34 @@
+# Analysis Configuration
+
+# Default settings for component analysis
+default:
+  quantity_format: "number"
+  focus_areas:
+    - "Circuit protection devices"
+    - "Power distribution components"
+    - "Measurement and control devices"
+
+# Specialized analysis modes
+power_quality:
+  additional_instructions: |
+    Pay special attention to:
+    - Power quality monitoring devices
+    - Harmonic filters and capacitors
+    - Protection coordination schemes
+    - Voltage regulation equipment
+
+distribution_panel:
+  additional_instructions: |
+    Focus on:
+    - Main and sub-distribution panels
+    - Circuit breaker ratings and coordination
+    - Cable specifications and routing
+    - Load distribution analysis
+
+industrial_motor_control:
+  additional_instructions: |
+    Emphasize:
+    - Motor control centers (MCC)
+    - Variable frequency drives (VFD)
+    - Motor protection devices
+    - Control and instrumentation cables

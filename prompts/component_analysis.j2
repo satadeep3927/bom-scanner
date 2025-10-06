@@ -1,0 +1,36 @@
+Analyze this single-line electrical diagram and identify all electrical components with their specifications. Focus on standard electrical symbols commonly found in power distribution systems.
+
+Please identify the following types of components when present:
+- Circuit Breakers (MCB, MCCB, ACB) with current ratings
+- Transformers (Power, Current, Voltage) with kVA/VA ratings and voltage levels
+- Motors (Induction, Synchronous) with HP/kW ratings
+- Generators with capacity ratings
+- Switches (Isolators, Load Break, Disconnect)
+- Protection devices (Relays, Fuses) with ratings
+- Measurement devices (Meters, CTs, PTs)
+- Cables and Conductors with specifications
+- Busbars and distribution panels
+- Capacitors with kVAR ratings
+- Any other electrical components visible
+
+For each component identified, provide:
+- Component name/designation from the diagram
+- Component type/category
+- Electrical ratings (voltage, current, power, etc.) if visible
+- Quantity count
+- Any additional specifications visible on the diagram
+
+Response format should be valid JSON:
+[{
+  "name": "Component designation or name from diagram",
+  "type": "Specific component type (e.g., 'MCCB', '3-Phase Induction Motor', 'Power Transformer')",
+  "rating": "Electrical rating with units (e.g., '100A', '500kVA', '15HP')",
+  "voltage": "Voltage level if specified (e.g., '415V', '11kV')",
+  "quantity": {{ quantity_format | default("number") }},
+  "specifications": "Any additional details visible"
+}]
+
+Focus on accuracy and only include components that are clearly visible and identifiable in the diagram.
+{% if additional_instructions %}
+{{ additional_instructions }}
+{% endif %}
