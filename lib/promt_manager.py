@@ -1,6 +1,8 @@
 import os
+
 import yaml
 from jinja2 import Environment, FileSystemLoader
+
 
 class PromptManager:
     def __init__(self, prompts_dir: str = "prompts"):
@@ -17,19 +19,20 @@ class PromptManager:
         """Load configuration from config.yaml"""
         config_path = os.path.join(self.prompts_dir, "config.yaml")
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
             return {"default": {}}
 
     def load_system_prompt(self) -> str:
         """Load the system prompt"""
-        system_prompt_path = os.path.join(
-            self.prompts_dir, "system_prompt.txt")
-        with open(system_prompt_path, 'r', encoding='utf-8') as f:
+        system_prompt_path = os.path.join(self.prompts_dir, "system_prompt.txt")
+        with open(system_prompt_path, "r", encoding="utf-8") as f:
             return f.read().strip()
 
-    def render_component_analysis_prompt(self, analysis_mode: str = "default", **kwargs) -> str:
+    def render_component_analysis_prompt(
+        self, analysis_mode: str = "default", **kwargs
+    ) -> str:
         """
         Render the component analysis prompt with variables.
 
@@ -40,8 +43,7 @@ class PromptManager:
         template = self.env.get_template("component_analysis.j2")
 
         # Get config for the specified mode
-        mode_config = self.config.get(
-            analysis_mode, self.config.get("default", {}))
+        mode_config = self.config.get(analysis_mode, self.config.get("default", {}))
 
         # Merge mode config with kwargs
         template_vars = {**mode_config, **kwargs}
