@@ -8,7 +8,8 @@ import streamlit as st
 from client import LLMClient
 from settings import LLM_API_BASE, LLM_API_KEY, LLM_MODEL
 
-client = LLMClient(api_key=LLM_API_KEY, api_base=LLM_API_BASE, ai_model=LLM_MODEL)
+client = LLMClient(api_key=LLM_API_KEY,
+                   api_base=LLM_API_BASE, ai_model=LLM_MODEL)
 
 # App title
 st.set_page_config(page_title="Electrical Component Analyzer", layout="wide")
@@ -32,25 +33,49 @@ if 'analysis_result' not in st.session_state:
     st.session_state.analysis_result = None
 if 'selected_components' not in st.session_state:
     st.session_state.selected_components = []
+if 'last_uploaded_file' not in st.session_state:
+    st.session_state.last_uploaded_file = None
+if 'temp_file_path' not in st.session_state:
+    st.session_state.temp_file_path = None
+if 'selected_options' not in st.session_state:
+    st.session_state.selected_options = []
 
-# Run analysis
+# Save uploaded file to temp location (but don't analyze yet)
 if uploaded_file:
-    st.success("File uploaded. Processing...")
+    # Check if this is a new file
+    if st.session_state.last_uploaded_file != uploaded_file.name:
+        st.success(
+            "File uploaded successfully! Select analysis mode and click 'Analyze Diagram' to start.")
 
-    # Save uploaded file to a temporary path
-    with tempfile.NamedTemporaryFile(
-        delete=False, suffix=os.path.splitext(uploaded_file.name)[1]
-    ) as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        temp_path = tmp_file.name
+        # Clean up old temp file if exists
+        if st.session_state.temp_file_path and os.path.exists(st.session_state.temp_file_path):
+            os.remove(st.session_state.temp_file_path)
 
-    # Run the analysis
-    with st.spinner("Analyzing the diagram..."):
-        result = client.generate_bom_summary(temp_path, analysis_mode)
-        st.session_state.analysis_result = result
+        # Save uploaded file to a temporary path
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=os.path.splitext(uploaded_file.name)[1]
+        ) as tmp_file:
+            tmp_file.write(uploaded_file.read())
+            st.session_state.temp_file_path = tmp_file.name
+            st.session_state.last_uploaded_file = uploaded_file.name
+            # Clear previous analysis when new file uploaded
+            st.session_state.analysis_result = None
+else:
+    # Clear the session state if no file is uploaded
+    if st.session_state.temp_file_path and os.path.exists(st.session_state.temp_file_path):
+        os.remove(st.session_state.temp_file_path)
+    st.session_state.last_uploaded_file = None
+    st.session_state.temp_file_path = None
+    st.session_state.analysis_result = None
 
-    # Clean up temp file
-    os.remove(temp_path)
+# Add Analyze button
+if uploaded_file and st.session_state.temp_file_path:
+    if st.button("🔍 Analyze Diagram", type="primary", use_container_width=True):
+        with st.spinner("Analyzing the diagram..."):
+            result = client.generate_bom_summary(
+                st.session_state.temp_file_path, analysis_mode)
+            st.session_state.analysis_result = result
+        st.success("✅ Analysis complete!")
 
 # Display analysis results if available
 if st.session_state.analysis_result:
@@ -73,16 +98,50 @@ if st.session_state.analysis_result:
             for item in all_components
         ]
 
-        # Component selection
-        selected_options = st.multiselect(
-            "Choose components to include in Bill of Materials:",
-            options=component_options,
-            default=component_options,  # Select all by default
-            help="Select the components you want to include in your BOM"
-        )
+        # Handle button clicks before rendering widgets
+        if 'button_clicked' not in st.session_state:
+            st.session_state.button_clicked = None
+
+        # Component selection in same row
+        col1, col2, col3 = st.columns([5, 1, 1])
+
+        with col1:
+            # 1. Use session_state as the SINGLE source of truth
+            if "selected_options" not in st.session_state:
+                st.session_state.selected_options = []
+
+            # 2. Multiselect with NO key, default from session_state
+            selected_options = st.multiselect(
+                "Choose components to include in Bill of Materials:",
+                options=component_options,
+                default=st.session_state.selected_options,
+                help="Select the components you want to include in your BOM"
+            )
+
+            # 3. CRITICAL: Immediately sync back any user change
+            st.session_state.selected_options = selected_options
+
+        with col2:
+            st.markdown("<div style='padding-top: 28px;'></div>",
+                        unsafe_allow_html=True)
+            if st.button("Select All", use_container_width=True, key="select_all_btn"):
+                st.session_state.selected_options = component_options.copy()
+                st.rerun()
+
+        with col3:
+            st.markdown("<div style='padding-top: 28px;'></div>",
+                        unsafe_allow_html=True)
+            if st.button("Clear All", use_container_width=True, key="clear_all_btn"):
+                st.session_state.selected_options = []
+                st.rerun()
+
+        # Update session state with current selection
+        if selected_options != st.session_state.selected_options:
+            st.session_state.selected_options = selected_options
 
         # Update selected components in session state
-        selected_indices = [component_options.index(opt) for opt in selected_options]
+        selected_indices = [component_options.index(
+            opt) for opt in selected_options if opt in component_options]
         st.session_state.selected_components = [
             all_components[i] for i in selected_indices
         ]
@@ -95,11 +154,10 @@ if st.session_state.analysis_result:
                 # Display selected components in a table
                 st.dataframe(st.session_state.selected_components)
 
-                st.success(f"✅ BOM Generated: {len(st.session_state.selected_components)} items selected")
+                st.success(
+                    f"✅ BOM Generated: {len(st.session_state.selected_components)} items selected")
 
                 # Download button for CSV
-                import pandas as pd
-
                 df = pd.DataFrame(st.session_state.selected_components)
                 csv = df.to_csv(index=False)
 
@@ -124,6 +182,8 @@ if st.session_state.analysis_result:
                     key="download-excel"
                 )
             else:
-                st.warning("⚠️ Please select at least one component for the BOM.")
+                st.warning(
+                    "⚠️ Please select at least one component for the BOM.")
     else:
-        st.error("❌ No components were detected in the uploaded diagram. Please try a different image or analysis mode.")
+        st.error(
+            "❌ No components were detected in the uploaded diagram. Please try a different image or analysis mode.")
