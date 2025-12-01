@@ -41,7 +41,7 @@ streamlit==1.43.2
 pdf2image==1.17.0
 
 # Image processing
-Pillow==12.0.0
+Pillow
 
 # Data processing and export
 pandas==2.2.2
