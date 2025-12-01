@@ -1,4 +1,5 @@
 import io
+import json
 import os
 from base64 import b64encode
 
@@ -109,8 +110,6 @@ class LLMClient:
         :param components_json: JSON string from identify_components method
         :return: Formatted list suitable for BOM generation
         """
-        import json
-
         try:
             # Clean the JSON response first
             clean_json = self.clean_json_response(components_json)
@@ -149,7 +148,7 @@ class LLMClient:
             image_path, analysis_mode, **prompt_kwargs
         )
         # Clean the JSON response before processing
-        clean_json = self.clean_json_response(components_json)
+        clean_json = self.clean_json_response(components_json or "{}")
         bom_items = self.parse_components_for_bom(clean_json)
 
         return {
