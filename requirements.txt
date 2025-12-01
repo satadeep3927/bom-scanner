@@ -20,7 +20,7 @@ jiter
 openai
 
 # Data validation
-pydantic7
+pydantic
 pydantic_core
 
 # YAML configuration
