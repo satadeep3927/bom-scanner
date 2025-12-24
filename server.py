@@ -17,6 +17,73 @@ client = LLMClient(ai_model=LLM_MODEL)
 
 # App title
 st.set_page_config(page_title="Electrical Component Analyzer", layout="wide")
+
+# Initialize session state for authentication
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+
+# Authentication function
+def check_credentials(username: str, password: str) -> bool:
+    """Verify username and password against settings."""
+    credentials = settings.LOGIN_CREDENTIALS
+    if credentials and username in credentials:
+        return credentials[username] == password
+    return False
+
+# Login page
+if not st.session_state.authenticated:
+    # Center the login form using columns
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # Card-like container with styling
+        st.markdown("""
+        <style>
+        .stForm {
+            max-width: 400px;
+            margin: auto;
+            padding: 50px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        
+
+        with st.form("login_form"):
+            st.markdown("<h1 style='text-align: center;'> Login</h1>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; color: #666;'>Please enter your credentials to access the Electrical Component Analyzer</p>", unsafe_allow_html=True)
+        
+            username = st.text_input("Username (Email)", placeholder="user@example.com")
+            password = st.text_input("Password", type="password")
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit_button = st.form_submit_button("Login", use_container_width=True, type="primary")
+            
+            if submit_button:
+                if check_credentials(username, password):
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.success("✅ Login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid username or password")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.stop()  # Stop execution if not authenticated
+
+# Logout button in sidebar
+with st.sidebar:
+    st.markdown(f"**Logged in as:** {st.session_state.username}")
+    if st.button("🚪 Logout", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.username = None
+        st.rerun()
+    st.divider()
+
 st.title("🔌 Electrical Diagram Component Analyzer")
 
 # Sidebar configuration
