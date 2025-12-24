@@ -22,6 +22,7 @@ openai
 # Data validation
 pydantic
 pydantic_core
+pydantic-settings
 
 # YAML configuration
 PyYAML
@@ -46,3 +47,4 @@ Pillow
 # Data processing and export
 pandas
 openpyxl
+requests

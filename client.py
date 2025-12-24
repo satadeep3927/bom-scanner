@@ -6,16 +6,23 @@ from base64 import b64encode
 from openai import OpenAI
 from pdf2image import convert_from_path
 
+from common.settings import settings
+from common.utils import get_access_token_from_copilot
 from lib.promt_manager import PromptManager
 
 
 class LLMClient:
-    def __init__(
-        self, api_key: str, api_base: str, ai_model: str, prompts_dir: str = "prompts"
-    ):
-        self.client = OpenAI(api_key=api_key, base_url=api_base)
+    def __init__(self, ai_model: str, prompts_dir: str = "prompts"):
         self.ai_model = ai_model
         self.prompt_manager = PromptManager(prompts_dir)
+
+    def _get_client(self) -> OpenAI:
+        client = OpenAI(
+            api_key=get_access_token_from_copilot(),
+            base_url="https://api.githubcopilot.com/",
+        )
+
+        return client
 
     def convert_to_base64(self, file_path: str) -> str:
         """
@@ -64,7 +71,9 @@ class LLMClient:
             analysis_mode, **prompt_kwargs
         )
 
-        response = self.client.chat.completions.create(
+        response = self._get_client().chat.completions.create(
+            extra_headers=settings.EXTRA_HEADERS,
+            temperature=0,
             model=self.ai_model,
             messages=[
                 {"role": "system", "content": system_prompt},
